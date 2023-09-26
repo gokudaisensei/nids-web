@@ -1,0 +1,7 @@
+{
+  "name": "nids-web-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "daisyui": "^3.7.7"
+  }
+}

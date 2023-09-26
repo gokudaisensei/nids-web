@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container mx-auto mt-8 flex items-center justify-center h-screen">
+        <div class="w-full max-w-md">
+            <h1 class="text-3xl font-bold mb-4 text-center">Upload a CSV file for prediction</h1>
+            <form method="POST" enctype="multipart/form-data" class="mb-4 flex flex-col items-center">
+                <div class="input-group">
+                    <input type="file" name="file" accept=".csv"
+                           class="file-input file-input-bordered file-input-primary w-full">
+                </div>
+                <button type="submit" class="btn btn-primary btn-outline mt-4">Upload</button>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container mx-auto mt-8 h-screen flex flex-col justify-center">
+        <h1 class="text-3xl font-bold mb-4 text-center">Prediction Result</h1>
+        <p class="text-lg mb-4 text-center">The prediction result is: {{ prediction }}</p>
+        <div class="flex justify-center">
+            <a href="/" class="btn btn-primary btn-outline">Back to Upload</a>
+        </div>
+    </div>
+{% endblock content %}
