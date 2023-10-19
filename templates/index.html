@@ -6,8 +6,15 @@
             <h1 class="text-3xl font-bold mb-4 text-center">Upload a CSV file for prediction</h1>
             <form method="POST" enctype="multipart/form-data" class="mb-4 flex flex-col items-center">
                 <div class="input-group">
-                    <input type="file" name="file" accept=".csv"
-                           class="file-input file-input-bordered file-input-primary w-full">
+                    <input type="file" name="file" accept=".csv" class="file-input file-input-bordered file-input-primary w-full">
+                </div>
+                <div class="form-group mt-4">
+                    <label for="model_type" class="label">Select Model Type:</label>
+                    <select name="model_type" id="model_type" class="select select-bordered select-primary">
+                        <option value=0>OG</option>
+                        <option value=1>PP_MN</option>
+                        <!-- Add more options as needed -->
+                    </select>
                 </div>
                 <button type="submit" class="btn btn-primary btn-outline mt-4">Upload</button>
             </form>

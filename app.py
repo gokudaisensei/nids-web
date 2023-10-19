@@ -3,7 +3,9 @@ import pandas as pd
 import joblib
 from flask import Flask, render_template, request, redirect, url_for
 from flask_assets import Bundle, Environment
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
 app = Flask(__name__)
@@ -11,7 +13,7 @@ app = Flask(__name__)
 # Configuration
 app.config["UPLOAD_FOLDER"] = "uploads"
 app.config["MODEL_PATH"] = "models/random_forest_model.pkl"
-app.config["TEST_ACCURACY_THRESHOLD"] = 0.9586529413442071
+app.config["TEST_ACCURACY_THRESHOLD"] = 0.95
 
 # Initialize Flask-Assets
 assets = Environment(app)
@@ -20,18 +22,61 @@ css = Bundle("src/main.css", output="dist/main.css")
 assets.register("css", css)
 css.build()
 
-# Load the pre-trained model
-model = joblib.load(app.config["MODEL_PATH"])
 
-
-def preprocess_data(data):
-    # Perform necessary preprocessing on the data
-    data = data.drop(columns=['id', 'attack_cat'])
-    X = data.drop(columns=['label'])  # Features
-    y = data['label']  # Target variable
-    X = pd.get_dummies(X)
+def make_prediction(X, y):
+    # Split the data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    return X_test, y_test
+
+    # Create and train a Random Forest model
+    rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf_classifier.fit(X_train, y_train)
+
+    # Make predictions on the test data
+    y_pred = rf_classifier.predict(X_test)
+
+    # Calculate accuracy
+    return (accuracy := accuracy_score(y_test, y_pred))
+
+
+def preprocess_data(data, model_choice):
+    if model_choice == 1:
+        # Drop unwanted columns
+        data = data.drop(columns=['version', 'ihl', 'tos', 'len', 'id', 'frag', 'ttl', 'chksum',
+                                  'src', 'dst', 'options', 'time', 'dataofs', 'reserved',
+                                  'window', 'chksum.1', 'urgptr', 'options.1', 'payload',
+                                  'payload_raw', 'payload_hex'])
+
+        # Split the data into features (X) and target variable (y)
+        X = data.drop(columns=['label'])
+        y = data['label']
+
+        # Perform one-hot encoding for categorical columns
+        X = pd.get_dummies(X)
+
+        # Normalize or scale features using StandardScaler
+        scaler = StandardScaler()
+        X = scaler.fit_transform(X)
+
+        return X, y
+    elif model_choice == 0:
+        # Drop unwanted columns
+        data = data.drop(columns=['id', 'attack_cat'])
+
+        # Remove rows with missing values
+        data = data.dropna()
+
+        # Split the data into features (X) and target variable (y)
+        X = data.drop(columns=['label'])
+        y = data['label']
+
+        # Perform one-hot encoding for categorical columns
+        X = pd.get_dummies(X)
+
+        # Normalize or scale features using StandardScaler
+        scaler = StandardScaler()
+        X = scaler.fit_transform(X)
+
+        return X, y
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -54,14 +99,13 @@ def index():
             # Read the CSV data into a DataFrame
             data_to_classify = pd.read_csv(file_path)
 
+            model_type = int(request.form.get("model_type"))
+
             # Preprocess the data
-            X_test, y_test = preprocess_data(data_to_classify)
+            X, y = preprocess_data(data_to_classify, model_type)
+            accuracy = make_prediction(X, y)
 
-            # Use the model to make predictions
-            predictions = model.predict(X_test)
-            accuracy = accuracy_score(y_test, predictions)
-
-            if accuracy <= app.config["TEST_ACCURACY_THRESHOLD"]:
+            if accuracy < app.config["TEST_ACCURACY_THRESHOLD"]:
                 prediction_message = "Normal"
             else:
                 prediction_message = "Anomaly"
